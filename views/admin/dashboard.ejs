@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+</head>
+<body>
+  <h1>Welcome to the Admin Dashboard</h1>
+  <a href="/admin/writeArticle">Add New Article</a>
+  <ul>
+    <% articles.forEach(article => { %>
+        <li>
+            <a href="/article/<%= article.file %>"><%= article.title %></a>
+            <a href="/views/admin/edit">edit</a>
+        </li>
+    <% }) %>
+  </ul>
+  <a href="/">Go back to Home</a>
+</body>
+</html>
