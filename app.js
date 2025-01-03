@@ -129,7 +129,7 @@ app.post('/admin/articles', (req, res) => {
 
     // Save the article to a file 
     const articlesDir = path.join(__dirname, 'articles', `${title}.json`); 
-    fs.writeFileSync(articlesDir, JSON.stringify(article, null, 2))
+    fs.writeFileSync(articlesDir, JSON.stringify(article, null, 2));
     res.redirect('/admin/dashboard');
 })
 
