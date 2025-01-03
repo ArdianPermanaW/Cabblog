@@ -81,31 +81,39 @@ app.post('/admin/login', (req, res) => {
     }
 });
 
-app.get('/admin/dashboard', (req, res) => {
-    if (req.session.isAdmin) {
-        fs.readdir('./articles', (err, files) => {
-            if (err) {
-                res.status(500).send('Error reading articles.');
-                return;
-            }
-            // Extract article titles from filenames
-            const articleLinks = files.map(file => {
-                const articleTitle = path.basename(file, '.json'); // Use filename as title
-                return { title: articleTitle, file: file };
-            });
-    
-            // Render home page with list of articles
-            res.render('admin/dashboard', { articles: articleLinks });
-        });
+// Protect all /admin routes
+function isAdmin(req, res, next) {
+    if (req.session && req.session.isAdmin) {
+        return next(); // User is authenticated, proceed as normal
     } else {
-        res.redirect('/admin/login'); 
+        res.redirect('/admin/login'); // Redirect to login if not authenticated
     }
+}
+app.use('/admin', isAdmin);
+
+
+app.get('/admin/dashboard', (req, res) => {
+    fs.readdir('./articles', (err, files) => {
+        if (err) {
+            res.status(500).send('Error reading articles.');
+            return;
+        }
+        // Extract article titles from filenames
+        const articleLinks = files.map(file => {
+            const articleTitle = path.basename(file, '.json'); // Use filename as title
+            return { title: articleTitle, file: file };
+        });
+
+        // Render home page with list of articles
+        res.render('admin/dashboard', { articles: articleLinks });
+    });
 });
 
 app.get('/admin/writeArticle', (req, res) => {
     res.render('admin/writeArticle');
 })
 
+//handle form submission for edit and writeArticle
 app.post('/admin/articles', (req, res) => {
     const {title, content, date } = req.body;
 
@@ -122,7 +130,39 @@ app.post('/admin/articles', (req, res) => {
     // Save the article to a file 
     const articlesDir = path.join(__dirname, 'articles', `${title}.json`); 
     fs.writeFileSync(articlesDir, JSON.stringify(article, null, 2))
+    res.redirect('/admin/dashboard');
 })
+
+//edit specified article
+app.get('/admin/edit/:title', (req, res) => {
+    const articleTitle = req.params.title;
+    fs.readFile(`./articles/${articleTitle}`, 'utf8', (err, data) => {
+        if (err) {
+            res.status(404).send('Article not found.');
+            return;
+        }
+
+        const article = JSON.parse(data);
+        res.render('admin/edit', { article: article });
+    });
+});
+
+//delete specified article
+app.get('/admin/delete/:id', (req,res) => {
+    const id = req.params.id;
+    const filePath = path.join(__dirname, 'articles', `${id}`);
+
+    //this deletes the file
+    fs.unlink(filePath, (err) => {
+        if(err){
+            console.error(`Error deleting file: ${err}`);
+            return res.status(500).send('Error deleting the article.');
+        }
+
+        console.log(`File deleted: ${filePath}`);
+        res.redirect('/admin/dashboard');
+    })
+});
 
 //#endregion
 
